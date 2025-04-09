@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>LEZ Monitor</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
+        />
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+            rel="stylesheet"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+        <style>
+            /* Same base styles as previous pages */
+            :root {
+                --primary: #3498db;
+                --secondary: #2c3e50;
+                --success: #2ecc71;
+                --danger: #e74c3c;
+                --warning: #f39c12;
+                --light: #ecf0f1;
+                --dark: #2c3e50;
+            }
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                margin: 0;
+                padding: 0;
+                display: flex;
+            }
+            .sidebar {
+                width: 240px;
+                background-color: var(--dark);
+                color: white;
+                height: 100vh;
+                padding: 20px 0;
+            }
+            .logo {
+                padding: 0 20px;
+                margin-bottom: 20px;
+                font-size: 24px;
+                font-weight: bold;
+                color: #4caf50;
+            }
+            .logo span {
+                color: white;
+            }
+            .menu-item {
+                padding: 12px 20px;
+                display: flex;
+                align-items: center;
+                transition: background-color 0.3s;
+            }
+            .menu-item.active {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            .menu-item:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+                cursor: pointer;
+            }
+            .menu-item i {
+                margin-right: 10px;
+                width: 20px;
+                text-align: center;
+            }
+
+            .main-content {
+                flex: 1;
+                padding: 20px;
+                overflow-y: auto;
+            }
+
+            .menu-item a {
+                color: inherit; /* Inherit the text color from parent */
+                text-decoration: none; /* Remove underline */
+                display: block; /* Make the link take the full area */
+                width: 100%; /* Ensure full width */
+            }
+
+            /* Ensure hover state works properly */
+            .menu-item:hover a {
+                color: inherit; /* Keep the same color on hover */
+            }
+
+            /* For active menu items */
+            .menu-item.active a {
+                color: white; /* Ensure text is white when active */
+            }
+
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+
+            .page-title {
+                font-size: 24px;
+                font-weight: bold;
+            }
+
+            .export-btn {
+                background-color: #4a90e2;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+            }
+
+            .export-btn i {
+                margin-right: 8px;
+            }
+
+            .filters {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
+            .filter-select {
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                min-width: 120px;
+            }
+
+            .tabs {
+                display: flex;
+                border-bottom: 1px solid #ddd;
+                margin-bottom: 30px;
+            }
+
+            .tab {
+                padding: 10px 20px;
+                cursor: pointer;
+            }
+
+            .tab.active {
+                color: #4a90e2;
+                border-bottom: 2px solid #4a90e2;
+            }
+
+            .aqi-display {
+                background-color: #fff8e1;
+                padding: 30px;
+                text-align: center;
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+
+            .aqi-title {
+                color: #e6a817;
+                font-size: 18px;
+                margin-bottom: 15px;
+            }
+
+            .aqi-value {
+                font-size: 72px;
+                font-weight: bold;
+                color: #e6a817;
+                margin-bottom: 15px;
+            }
+
+            .aqi-description {
+                color: #e6a817;
+            }
+
+            .metrics-container {
+                display: flex;
+                gap: 20px;
+            }
+
+            .metric-card {
+                background-color: white;
+                border-radius: 8px;
+                padding: 20px;
+                flex: 1;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+
+            .metric-title {
+                font-size: 20px;
+                font-weight: bold;
+                margin-bottom: 20px;
+            }
+
+            .pollutant-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+
+            .pollutant-box {
+                background-color: #f9f9f9;
+                padding: 20px;
+                border-radius: 6px;
+            }
+
+            .pollutant-name {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+
+            .pollutant-value {
+                font-size: 28px;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+
+            .pollutant-unit {
+                color: #777;
+                font-size: 14px;
+                display: inline-block;
+            }
+
+            .pollutant-description {
+                margin-top: 10px;
+                color: #555;
+            }
+
+            .trend-chart {
+                height: 300px;
+                width: 100%;
+                margin-top: 20px;
+                background-image: url("/api/placeholder/500/300");
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="sidebar">
+            <div class="logo">LEZ <span>Monitor</span></div>
+            <div class="menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                <a href="index.html">Dashboard</a>
+            </div>
+            <div class="menu-item">
+                <i class="fas fa-map-marked-alt"></i>
+                <a href="page1.html">Zone Management</a>
+            </div>
+            <div class="menu-item">
+                <i class="fas fa-video"></i>
+                <a href="page2.html">Camera Network</a>
+            </div>
+            <div class="menu-item">
+                <i class="fas fa-car"></i>
+                <a href="page3.html">Vehicle Detection</a>
+            </div>
+            <div class="menu-item">
+                <i class="fas fa-wind"></i>
+                <a href="page4.html">Air Quality Metrics</a>
+            </div>
+            <div class="menu-item">
+                <i class="fas fa-money-bill-wave"></i>
+                <a href="page5.html">Revenue Management</a>
+            </div>
+
+            <div class="menu-item">
+                <i class="fas fa-cog"></i>
+                <a href="page7.html">System Settings</a>
+            </div>
+            <div class="menu-item active">
+                <i class="fas fa-chart-bar"></i>
+                <a href="page8.html">Reports</a>
+            </div>
+        </div>
+
+        <!-- REPORTS PAGE -->
+        <!-- In your sidebar, set the "active" class on the Reports nav item -->
+        <div class="main-content">
+            <div class="header">
+                <h1 class="page-title">Reports</h1>
+                <div style="display: flex; gap: 10px">
+                    <button
+                        class="export-btn"
+                        style="background-color: #4a90e2"
+                    >
+                        <i>📊</i> Generate Report
+                    </button>
+                    <button class="export-btn"><i>⬇️</i> Export Data</button>
+                </div>
+            </div>
+
+            <div class="filters">
+                <select class="filter-select">
+                    <option>All Zones</option>
+                    <option>Central Zone</option>
+                    <option>North Zone</option>
+                    <option>South Zone</option>
+                </select>
+                <select class="filter-select">
+                    <option>Last 30 Days</option>
+                    <option>Last Quarter</option>
+                    <option>Last 6 Months</option>
+                    <option>Year to Date</option>
+                    <option>Custom Range</option>
+                </select>
+                <select class="filter-select">
+                    <option>All Report Types</option>
+                    <option>Air Quality</option>
+                    <option>Traffic Flow</option>
+                    <option>Revenue</option>
+                    <option>Compliance</option>
+                </select>
+            </div>
+
+            <div class="metrics-container">
+                <div class="metric-card">
+                    <div class="metric-title">Available Reports</div>
+
+                    <table
+                        style="
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 20px;
+                        "
+                    >
+                        <thead>
+                            <tr
+                                style="
+                                    background-color: #f5f5f5;
+                                    border-bottom: 1px solid #ddd;
+                                "
+                            >
+                                <th style="padding: 12px; text-align: left">
+                                    Report Name
+                                </th>
+                                <th style="padding: 12px; text-align: left">
+                                    Category
+                                </th>
+                                <th style="padding: 12px; text-align: left">
+                                    Last Generated
+                                </th>
+                                <th style="padding: 12px; text-align: left">
+                                    Period
+                                </th>
+                                <th style="padding: 12px; text-align: center">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid #eee">
+                                <td style="padding: 12px">
+                                    Monthly Air Quality Summary
+                                </td>
+                                <td style="padding: 12px">Air Quality</td>
+                                <td style="padding: 12px">2025-04-01</td>
+                                <td style="padding: 12px">March 2025</td>
+                                <td style="padding: 12px; text-align: center">
+                                    <button
+                                        style="
+                                            background: none;
+                                            border: none;
+                                            color: #4a90e2;
+                                            cursor: pointer;
+                                            margin-right: 10px;
+                                        "
+                                    >
+                                        View
+                                    </button>
+                                    <button
+                                        style="
+                                            background: none;
+                                            border: none;
+                                            color: #4a90e2;
+                                            cursor: pointer;
+                                        "
+                                    >
+                                        Download
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #eee">
+                                <td style="padding: 12px">
+                                    Quarterly Revenue Report
+                                </td>
+                                <td style="padding: 12px">Revenue</td>
+                                <td style="padding: 12px">2025-04-02</td>
+                                <td style="padding: 12px">Q1 2025</td>
+                                <td style="padding: 12px; text-align: center">
+                                    <button
+                                        style="
+                                            background: none;
+                                            border: none;
+                                            color: #4a90e2;
+                                            cursor: pointer;
+                                            margin-right: 10px;
+                                        "
+                                    >
+                                        View
+                                    </button>
+                                    <button
+                                        style="
+                                            background: none;
+                                            border: none;
+                                            color: #4a90e2;
+                                            cursor: pointer;
+                                        "
+                                    >
+                                        Download
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #eee">
+                                <td style="padding: 12px">
+                                    Traffic Flow Analysis
+                                </td>
+                                <td style="padding: 12px">Traffic Flow</td>
+                                <td style="padding: 12px">2025-04-05</td>
+                                <td style="padding: 12px">Last 30 Days</td>
+                                <td style="padding: 12px; text-align: center">
+                                    <button
+                                        style="
+                                            background: none;
+                                            border: none;
+                                            color: #4a90e2;
+                                            cursor: pointer;
+                                            margin-right: 10px;
+                                        "
+                                    >
+                                        View
+                                    </button>
+                                    <button
+                                        style="
+                                            background: none;
+                                            border: none;
+                                            color: #4a90e2;
+                                            cursor: pointer;
+                                        "
+                                    >
+                                        Download
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #eee">
+                                <td style="padding: 12px">
+                                    Compliance Rate by Vehicle Type
+                                </td>
+                                <td style="padding: 12px">Compliance</td>
+                                <td style="padding: 12px">2025-04-06</td>
+                                <td style="padding: 12px">March 2025</td>
+                                <td style="padding: 12px; text-align: center">
+                                    <button
+                                        style="
+                                            background: none;
+                                            border: none;
+                                            color: #4a90e2;
+                                            cursor: pointer;
+                                            margin-right: 10px;
+                                        "
+                                    >
+                                        View
+                                    </button>
+                                    <button
+                                        style="
+                                            background: none;
+                                            border: none;
+                                            color: #4a90e2;
+                                            cursor: pointer;
+                                        "
+                                    >
+                                        Download
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #eee">
+                                <td style="padding: 12px">
+                                    Year-to-Date Emissions Reduction
+                                </td>
+                                <td style="padding: 12px">Air Quality</td>
+                                <td style="padding: 12px">2025-04-07</td>
+                                <td style="padding: 12px">Jan-Mar 2025</td>
+                                <td style="padding: 12px; text-align: center">
+                                    <button
+                                        style="
+                                            background: none;
+                                            border: none;
+                                            color: #4a90e2;
+                                            cursor: pointer;
+                                            margin-right: 10px;
+                                        "
+                                    >
+                                        View
+                                    </button>
+                                    <button
+                                        style="
+                                            background: none;
+                                            border: none;
+                                            color: #4a90e2;
+                                            cursor: pointer;
+                                        "
+                                    >
+                                        Download
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="metric-card" style="margin-top: 20px">
+                <div class="metric-title">Schedule Reports</div>
+
+                <div style="margin-top: 20px">
+                    <div style="margin-bottom: 20px">
+                        <label
+                            style="
+                                display: block;
+                                margin-bottom: 8px;
+                                font-weight: bold;
+                            "
+                            >Report Type</label
+                        >
+                        <select
+                            style="
+                                width: 100%;
+                                padding: 10px;
+                                border: 1px solid #ddd;
+                                border-radius: 4px;
+                            "
+                        >
+                            <option>Air Quality Summary</option>
+                            <option>Revenue Report</option>
+                            <option>Traffic Flow Analysis</option>
+                            <option>Compliance Rate Report</option>
+                            <option>Emissions Reduction Report</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 20px">
+                        <label
+                            style="
+                                display: block;
+                                margin-bottom: 8px;
+                                font-weight: bold;
+                            "
+                            >Frequency</label
+                        >
+                        <select
+                            style="
+                                width: 100%;
+                                padding: 10px;
+                                border: 1px solid #ddd;
+                                border-radius: 4px;
+                            "
+                        >
+                            <option>Daily</option>
+                            <option>Weekly</option>
+                            <option>Monthly</option>
+                            <option>Quarterly</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 20px">
+                        <label
+                            style="
+                                display: block;
+                                margin-bottom: 8px;
+                                font-weight: bold;
+                            "
+                            >Recipients</label
+                        >
+                        <input
+                            type="text"
+                            placeholder="Enter email addresses (comma separated)"
+                            style="
+                                width: 100%;
+                                padding: 10px;
+                                border: 1px solid #ddd;
+                                border-radius: 4px;
+                            "
+                        />
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end">
+                        <button
+                            style="
+                                background-color: #4a90e2;
+                                color: white;
+                                border: none;
+                                padding: 10px 20px;
+                                border-radius: 4px;
+                                cursor: pointer;
+                            "
+                        >
+                            Schedule Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

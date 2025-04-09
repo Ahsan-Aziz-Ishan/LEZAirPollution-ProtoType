@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Low Emission Zone Monitoring Dashboard</title>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const video = document.querySelector("video");
+                video.controls = false;
+                video.autoplay = true;
+                video.loop = true;
+                video.muted = true; // Required for autoplay in most browsers
+            });
+            // Function to generate random values within a range
+            function randomInRange(min, max) {
+                return Math.floor(Math.random() * (max - min + 1) + min);
+            }
+
+            // Function to slightly increase a value
+            function incrementValue(current, minIncrement, maxIncrement) {
+                return current + randomInRange(minIncrement, maxIncrement);
+            }
+
+            // Function to update time display
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                });
+                document.querySelectorAll(".update-time").forEach((el) => {
+                    el.textContent = `Last updated: ${timeString}`;
+                });
+            }
+
+            // Initial values
+            let currentTier = 3;
+            let baseRate = 125;
+            let congestionPremium = 50;
+            let pm25 = 28;
+            let pm10 = 45;
+            let no2 = 52;
+            let o3 = 38;
+            let aqi = 118;
+            let vehiclesDetected = 487;
+            let nonCompliant = 74;
+            let avgSpeed = 28;
+            let zoneCapacity = 68;
+            let revenue = 8522.5;
+
+            // Update function
+            function updateDashboard() {
+                console.log("Updating dashboard..."); // Debug line
+
+                // Update time first
+                updateTime();
+
+                // Tier changes (25% chance - more frequent)
+                if (Math.random() < 0.25) {
+                    if (currentTier === 3) {
+                        currentTier = 2;
+                        congestionPremium = 25;
+                    } else if (currentTier === 2) {
+                        currentTier = Math.random() < 0.5 ? 1 : 3;
+                        congestionPremium = currentTier === 1 ? 0 : 50;
+                    } else {
+                        currentTier = 2;
+                        congestionPremium = 25;
+                    }
+                    console.log("Changed tier to:", currentTier); // Debug line
+                }
+
+                // Air quality fluctuations (more noticeable)
+                pm25 = Math.max(10, Math.min(50, pm25 + randomInRange(-8, 8)));
+                pm10 = Math.max(
+                    20,
+                    Math.min(70, pm10 + randomInRange(-10, 10)),
+                );
+                no2 = Math.max(30, Math.min(80, no2 + randomInRange(-12, 12)));
+                o3 = Math.max(20, Math.min(60, o3 + randomInRange(-6, 6)));
+                aqi = Math.max(pm25 * 2, pm10 * 1.5, no2 * 1.8, o3 * 1.3);
+
+                // Traffic metrics (always increasing vehicles and revenue)
+                vehiclesDetected += randomInRange(15, 25);
+                nonCompliant = Math.floor(
+                    vehiclesDetected * (0.12 + Math.random() * 0.05),
+                );
+                avgSpeed = Math.max(
+                    15,
+                    Math.min(50, avgSpeed + randomInRange(-5, 5)),
+                );
+                zoneCapacity = Math.max(
+                    50,
+                    Math.min(90, zoneCapacity + randomInRange(-8, 8)),
+                );
+                revenue += randomInRange(150, 400);
+
+                // Update the DOM with more reliable selectors
+                document.querySelector(
+                    ".video-container .data-value.highlight",
+                ).textContent =
+                    `Tier ${currentTier} (${["Low", "Medium", "High"][currentTier - 1]})`;
+                document.querySelectorAll(
+                    ".video-container .data-value",
+                )[1].textContent = `${baseRate} Rs.`;
+                document.querySelectorAll(
+                    ".video-container .data-value",
+                )[2].textContent = `${congestionPremium} Rs.`;
+                document.querySelectorAll(
+                    ".video-container .data-value",
+                )[3].textContent = `${baseRate + congestionPremium} Rs.`;
+
+                // Air quality panel updates
+                const airQualityValues = document.querySelectorAll(
+                    ".info-panel .panel:nth-child(1) .data-value",
+                );
+                airQualityValues[0].textContent = `${pm25} μg/m³`;
+                airQualityValues[0].className = `data-value ${pm25 > 35 ? "danger" : pm25 > 25 ? "warning" : "good"}`;
+
+                airQualityValues[1].textContent = `${pm10} μg/m³`;
+                airQualityValues[1].className = `data-value ${pm10 > 50 ? "danger" : pm10 > 35 ? "warning" : "good"}`;
+
+                airQualityValues[2].textContent = `${no2} μg/m³`;
+                airQualityValues[2].className = `data-value ${no2 > 60 ? "danger" : no2 > 40 ? "warning" : "good"}`;
+
+                airQualityValues[3].textContent = `${o3} μg/m³`;
+                airQualityValues[3].className = `data-value ${o3 > 50 ? "danger" : o3 > 35 ? "warning" : "good"}`;
+
+                airQualityValues[4].textContent = Math.floor(aqi);
+                airQualityValues[4].className = `data-value ${aqi > 150 ? "danger" : aqi > 100 ? "warning" : "good"}`;
+
+                airQualityValues[5].textContent =
+                    aqi < 50
+                        ? "Good"
+                        : aqi < 100
+                          ? "Moderate"
+                          : aqi < 150
+                            ? "Unhealthy for Sensitive"
+                            : "Unhealthy";
+                airQualityValues[5].className = `data-value ${aqi > 150 ? "danger" : aqi > 100 ? "warning" : "good"}`;
+
+                // Update meter
+                document.querySelector(".meter-fill").style.width =
+                    `${Math.min(100, Math.max(0, (aqi - 20) / 1.5))}%`;
+
+                // Zone statistics updates
+                const zoneStatsValues = document.querySelectorAll(
+                    ".info-panel .panel:nth-child(2) .data-value",
+                );
+                zoneStatsValues[0].textContent = vehiclesDetected;
+                zoneStatsValues[1].textContent = `${nonCompliant} (${((nonCompliant / vehiclesDetected) * 100).toFixed(1)}%)`;
+                zoneStatsValues[2].textContent = `${avgSpeed} km/h`;
+
+                zoneStatsValues[3].textContent = `${zoneCapacity}%`;
+                zoneStatsValues[3].className = `data-value ${zoneCapacity > 75 ? "danger" : zoneCapacity > 65 ? "warning" : "good"}`;
+
+                zoneStatsValues[4].textContent = `${revenue.toFixed(2)} Rs.`;
+
+                // Update next tier prediction
+                const nextTierText =
+                    currentTier === 3
+                        ? "Decrease to Tier 2"
+                        : currentTier === 2
+                          ? Math.random() < 0.5
+                              ? "Decrease to Tier 1"
+                              : "Increase to Tier 3"
+                          : "Increase to Tier 2";
+                document.querySelector(".price-tier").innerHTML =
+                    `<strong>Next Tier Change:</strong> Expected in ${randomInRange(5, 20)} minutes (${nextTierText})`;
+            }
+
+            // Update every 2 seconds (even faster updates)
+            setInterval(updateDashboard, 2000);
+
+            // Initial update
+            updateDashboard();
+        </script>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            }
+
+            body {
+                background-color: #f0f4f8;
+                color: #333;
+            }
+
+            .dashboard {
+                display: flex;
+                height: 100vh;
+                padding: 20px;
+                gap: 20px;
+            }
+
+            .video-container {
+                flex: 7;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .video-pair {
+                display: flex;
+                gap: 20px;
+                height: calc(100% - 80px);
+            }
+
+            .video-box {
+                flex: 1;
+                background-color: #fff;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                padding: 15px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .video-title {
+                font-size: 18px;
+                margin-bottom: 10px;
+                color: #2c3e50;
+                font-weight: 600;
+            }
+
+            video {
+                width: 100%;
+                height: calc(100% - 30px);
+                border-radius: 5px;
+                background-color: #000;
+                object-fit: contain;
+            }
+
+            .info-panel {
+                flex: 3;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .panel {
+                background-color: #fff;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                padding: 20px;
+                flex: 1;
+            }
+
+            .panel-title {
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 15px;
+                color: #2c3e50;
+                border-bottom: 2px solid #3498db;
+                padding-bottom: 8px;
+            }
+
+            .data-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 12px;
+                padding: 8px 0;
+                border-bottom: 1px solid #eee;
+            }
+
+            .data-label {
+                font-weight: 500;
+                color: #555;
+            }
+
+            .data-value {
+                font-weight: 600;
+                color: #2c3e50;
+            }
+
+            .data-value.highlight {
+                color: #e74c3c;
+            }
+
+            .data-value.good {
+                color: #27ae60;
+            }
+
+            .data-value.warning {
+                color: #f39c12;
+            }
+
+            .data-value.danger {
+                color: #e74c3c;
+            }
+
+            .header {
+                background-color: #3498db;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .header h1 {
+                font-size: 24px;
+                font-weight: 600;
+            }
+
+            .status {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .status-indicator {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background-color: #2ecc71;
+            }
+
+            .status-text {
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .price-tier {
+                background-color: #f8f9fa;
+                border-radius: 5px;
+                padding: 10px;
+                margin-top: 5px;
+                border-left: 4px solid #3498db;
+            }
+
+            .meter-container {
+                height: 20px;
+                background-color: #ecf0f1;
+                border-radius: 10px;
+                margin: 10px 0;
+                overflow: hidden;
+            }
+
+            .meter-fill {
+                height: 100%;
+                border-radius: 10px;
+                background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
+                width: 65%;
+            }
+
+            .update-time {
+                text-align: right;
+                font-size: 12px;
+                color: #7f8c8d;
+                margin-top: 15px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="dashboard">
+            <div class="video-container">
+                <div class="header">
+                    <h1>Low Emission Zone Monitoring - Karachi #1226</h1>
+                    <div class="status">
+                        <div class="status-indicator"></div>
+                        <div class="status-text">System Active</div>
+                    </div>
+                </div>
+                <div class="video-pair">
+                    <div class="video-box">
+                        <div class="video-title">
+                            Vehicle Detection & Recognition
+                        </div>
+                        <video controls autoplay loop>
+                            <source
+                                src="https://objectstorage.us-ashburn-1.oraclecloud.com/n/iduzomivkh8s/b/bucket-20220724-1457/o/sample.mp4out.mp4"
+                                type="video/mp4"
+                            />
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+                <div>
+                    <div class="data-row">
+                        <span class="data-label">Current Tier:</span>
+                        <span class="data-value highlight">Tier 3 (High)</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Base Rate:</span>
+                        <span class="data-value">125 Rs.</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Congestion Premium:</span>
+                        <span class="data-value">50 Rs.</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Current Rate:</span>
+                        <span class="data-value highlight">175</span>
+                    </div>
+                    <div class="price-tier">
+                        <strong>Next Tier Change:</strong> Expected in 35
+                        minutes (Decrease to Tier 2)
+                    </div>
+                    <div class="update-time">Last updated: 12:45 PM</div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <div class="panel">
+                    <div class="panel-title">Air Quality Properties</div>
+                    <div class="data-row">
+                        <span class="data-label">PM2.5:</span>
+                        <span class="data-value warning">28 μg/m³</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">PM10:</span>
+                        <span class="data-value warning">45 μg/m³</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">NO₂:</span>
+                        <span class="data-value danger">52 μg/m³</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">O₃:</span>
+                        <span class="data-value good">38 μg/m³</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">AQI:</span>
+                        <span class="data-value warning">118</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Air Quality:</span>
+                        <span class="data-value warning">Moderate</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Pollution Level:</span>
+                    </div>
+                    <div class="meter-container">
+                        <div class="meter-fill"></div>
+                    </div>
+                    <div class="update-time">Last updated: 12:45 PM</div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">Zone Statistics</div>
+                    <div class="data-row">
+                        <span class="data-label">Vehicles Detected:</span>
+                        <span class="data-value">487</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Non-Compliant:</span>
+                        <span class="data-value">74 (15.2%)</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Average Speed:</span>
+                        <span class="data-value">28 km/h</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Zone Capacity:</span>
+                        <span class="data-value warning">68%</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Revenue (Today):</span>
+                        <span class="data-value">8,522.50 Rs.</span>
+                    </div>
+                    <div class="update-time">Last updated: 12:45 PM</div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

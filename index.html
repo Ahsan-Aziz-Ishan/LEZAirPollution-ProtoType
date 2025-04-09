@@ -1,0 +1,1130 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>LEZ Admin Dashboard - Pakistan</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
+        />
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+            rel="stylesheet"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+        <style>
+            :root {
+                --primary: #3498db;
+                --secondary: #2c3e50;
+                --success: #2ecc71;
+                --danger: #e74c3c;
+                --warning: #f39c12;
+                --light: #ecf0f1;
+                --dark: #2c3e50;
+            }
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                margin: 0;
+                padding: 0;
+                display: flex;
+            }
+
+            .sidebar {
+                width: 240px;
+                background-color: var(--dark);
+                color: white;
+                height: 100vh;
+                padding: 20px 0;
+            }
+            .logo {
+                padding: 0 20px;
+                margin-bottom: 20px;
+                font-size: 24px;
+                font-weight: bold;
+                color: #4caf50;
+            }
+            .logo span {
+                color: white;
+            }
+            .menu-item {
+                padding: 12px 20px;
+                display: flex;
+                align-items: center;
+                transition: background-color 0.3s;
+            }
+            .menu-item.active {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            .menu-item:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+                cursor: pointer;
+            }
+            .menu-item i {
+                margin-right: 10px;
+                width: 20px;
+                text-align: center;
+            }
+            .menu-item a {
+                color: inherit; /* Inherit the text color from parent */
+                text-decoration: none; /* Remove underline */
+                display: block; /* Make the link take the full area */
+                width: 100%; /* Ensure full width */
+            }
+
+            /* Ensure hover state works properly */
+            .menu-item:hover a {
+                color: inherit; /* Keep the same color on hover */
+            }
+
+            /* For active menu items */
+            .menu-item.active a {
+                color: white; /* Ensure text is white when active */
+            }
+
+            .container {
+                display: grid;
+                grid-template-columns: 250px 1fr;
+                min-height: 100vh;
+            }
+
+            /* Main Content */
+            .main-content {
+                padding: 20px;
+                overflow-y: auto;
+            }
+
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+                padding-bottom: 20px;
+                border-bottom: 1px solid #eee;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+                color: var(--dark);
+            }
+
+            .user-info {
+                display: flex;
+                align-items: center;
+            }
+
+            .user-info .avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background-color: var(--primary);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 10px;
+                font-weight: bold;
+            }
+
+            /* Dashboard Grid */
+            .dashboard-grid {
+                display: grid;
+                grid-template-columns: repeat(12, 1fr);
+                gap: 20px;
+            }
+
+            .card {
+                background-color: white;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                padding: 20px;
+                height: 100%;
+            }
+
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid #eee;
+            }
+
+            .card-header h3 {
+                font-size: 1.2rem;
+                color: var(--dark);
+            }
+
+            .card-header .actions {
+                display: flex;
+                gap: 10px;
+            }
+
+            .btn {
+                padding: 8px 15px;
+                border-radius: 5px;
+                border: none;
+                cursor: pointer;
+                font-size: 14px;
+                transition: all 0.2s;
+            }
+
+            .btn-primary {
+                background-color: var(--primary);
+                color: white;
+            }
+
+            .btn-secondary {
+                background-color: var(--secondary);
+                color: white;
+            }
+
+            .btn-outline {
+                background-color: transparent;
+                border: 1px solid #ddd;
+            }
+
+            .btn:hover {
+                opacity: 0.9;
+                transform: translateY(-1px);
+            }
+
+            /* Map Container */
+            .map-container {
+                grid-column: span 8;
+                height: 500px;
+            }
+
+            #map {
+                width: 100%;
+                height: 100%;
+                border-radius: 5px;
+            }
+
+            /* City Selector */
+            .city-selector {
+                grid-column: span 4;
+                height: 500px;
+                overflow-y: auto;
+            }
+
+            .city-item {
+                display: flex;
+                align-items: center;
+                padding: 12px 15px;
+                border-radius: 5px;
+                margin-bottom: 10px;
+                cursor: pointer;
+                transition: all 0.2s;
+                border: 1px solid #eee;
+            }
+
+            .city-item:hover {
+                background-color: #f9f9f9;
+            }
+
+            .city-item.active {
+                border-color: var(--primary);
+                background-color: rgba(52, 152, 219, 0.05);
+            }
+
+            .city-item .city-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background-color: #f1f1f1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 15px;
+            }
+
+            .city-item .city-info {
+                flex: 1;
+            }
+
+            .city-item .city-info h4 {
+                margin-bottom: 3px;
+            }
+
+            .city-item .city-info p {
+                font-size: 13px;
+                color: #666;
+            }
+
+            .city-item .city-stats {
+                text-align: right;
+            }
+
+            .city-item .city-stats .stat {
+                font-size: 13px;
+                margin-bottom: 3px;
+            }
+
+            .stat-value {
+                font-weight: bold;
+            }
+
+            .stat-value.good {
+                color: var(--secondary);
+            }
+
+            .stat-value.moderate {
+                color: var(--warning);
+            }
+
+            .stat-value.poor {
+                color: var(--danger);
+            }
+
+            /* Air Quality Card */
+            .air-quality {
+                grid-column: span 4;
+                height: 350px;
+            }
+
+            .air-quality-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .air-metric {
+                text-align: center;
+                padding: 15px 10px;
+                border-radius: 8px;
+                background-color: #f9f9f9;
+            }
+
+            .air-metric h4 {
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 10px;
+            }
+
+            .air-metric .value {
+                font-size: 24px;
+                font-weight: bold;
+            }
+
+            .air-metric .value.good {
+                color: var(--secondary);
+            }
+
+            .air-metric .value.moderate {
+                color: var(--warning);
+            }
+
+            .air-metric .value.poor {
+                color: var(--danger);
+            }
+
+            .air-quality-index {
+                grid-column: span 2;
+                text-align: center;
+                padding: 20px;
+                border-radius: 8px;
+                background-color: #f9f9f9;
+                margin-top: 15px;
+            }
+
+            .air-quality-index h4 {
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+
+            .air-quality-index .aqi-value {
+                font-size: 32px;
+                font-weight: bold;
+            }
+
+            /* Traffic Stats */
+            .traffic-stats {
+                grid-column: span 4;
+                height: 350px;
+            }
+
+            .stat-box {
+                display: flex;
+                align-items: center;
+                border-radius: 8px;
+                padding: 15px;
+                margin-bottom: 15px;
+                background-color: #f9f9f9;
+            }
+
+            .stat-box .icon {
+                width: 50px;
+                height: 50px;
+                border-radius: 8px;
+                background-color: rgba(52, 152, 219, 0.1);
+                color: var(--primary);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                margin-right: 15px;
+            }
+
+            .stat-box .details {
+                flex: 1;
+            }
+
+            .stat-box .details h4 {
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 5px;
+            }
+
+            .stat-box .details .stat-value {
+                font-size: 20px;
+                font-weight: bold;
+            }
+
+            /* Revenue Card */
+            .revenue {
+                grid-column: span 4;
+                height: 350px;
+            }
+
+            .chart-container {
+                height: 250px;
+                margin-top: 15px;
+            }
+
+            /* Camera Feed */
+            .camera-feed {
+                grid-column: span 12;
+            }
+
+            .feed-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 20px;
+                margin-top: 15px;
+            }
+
+            .feed-item {
+                border: 1px solid #eee;
+                border-radius: 10px;
+                overflow: hidden;
+            }
+
+            .feed-image {
+                height: 180px;
+                background-color: #f1f1f1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+            }
+
+            .feed-image img {
+                max-width: 100%;
+                max-height: 100%;
+            }
+
+            .feed-status {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                padding: 5px 10px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+
+            .feed-status.active {
+                background-color: rgba(46, 204, 113, 0.2);
+                color: var(--secondary);
+            }
+
+            .feed-status.inactive {
+                background-color: rgba(231, 76, 60, 0.2);
+                color: var(--danger);
+            }
+
+            .feed-info {
+                padding: 15px;
+            }
+
+            .feed-info h4 {
+                margin-bottom: 5px;
+            }
+
+            .feed-info p {
+                font-size: 13px;
+                color: #666;
+                margin-bottom: 8px;
+            }
+
+            .badge {
+                display: inline-block;
+                padding: 5px 10px;
+                border-radius: 20px;
+                font-size: 12px;
+                margin-right: 5px;
+            }
+
+            .badge-primary {
+                background-color: rgba(52, 152, 219, 0.1);
+                color: var(--primary);
+            }
+
+            .badge-secondary {
+                background-color: rgba(46, 204, 113, 0.1);
+                color: var(--secondary);
+            }
+
+            .badge-warning {
+                background-color: rgba(243, 156, 18, 0.1);
+                color: var(--warning);
+            }
+
+            .badge-danger {
+                background-color: rgba(231, 76, 60, 0.1);
+                color: var(--danger);
+            }
+
+            /* Zone Statistics */
+            .zone-statistics {
+                grid-column: span 6;
+            }
+
+            .zone-list {
+                overflow-y: auto;
+            }
+
+            .zone-item {
+                display: flex;
+                align-items: center;
+                padding: 12px 15px;
+                border-radius: 5px;
+                margin-bottom: 10px;
+                cursor: pointer;
+                transition: all 0.2s;
+                border: 1px solid #eee;
+            }
+
+            .zone-item:hover {
+                background-color: #f9f9f9;
+            }
+
+            .zone-item.active {
+                border-color: var(--primary);
+                background-color: rgba(52, 152, 219, 0.05);
+            }
+
+            .zone-item .zone-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 5px;
+                background-color: rgba(52, 152, 219, 0.1);
+                color: var(--primary);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 15px;
+            }
+
+            .zone-item .zone-info {
+                flex: 1;
+            }
+
+            .zone-item .zone-info h4 {
+                margin-bottom: 3px;
+            }
+
+            .zone-item .zone-info p {
+                font-size: 13px;
+                color: #666;
+            }
+
+            .zone-item .zone-stats {
+                text-align: right;
+            }
+
+            .zone-item .zone-stats .stat {
+                font-size: 13px;
+                margin-bottom: 3px;
+            }
+
+            /* Vehicle Compliance */
+            .vehicle-compliance {
+                grid-column: span 6;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="logo">LEZ <span>Monitor</span></div>
+                <div class="menu-item active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <a href="index.html">Dashboard</a>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <a href="page1.html">Zone Management</a>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-video"></i>
+                    <a href="page2.html">Camera Network</a>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-car"></i>
+                    <a href="page3.html">Vehicle Detection</a>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-wind"></i>
+                    <a href="page4.html">Air Quality Metrics</a>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <a href="page5.html">Revenue Management</a>
+                </div>
+
+                <div class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <a href="page7.html">System Settings</a>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <a href="page8.html">Reports</a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <div class="header">
+                    <h1>Low Emission Zone - Admin Dashboard</h1>
+                    <div class="user-info">
+                        <div class="avatar">A</div>
+                        <div>
+                            <div>Admin</div>
+                            <div style="font-size: 12px; color: #666">
+                                System Manager
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Map and City Selection -->
+                    <div class="card map-container">
+                        <div id="map"></div>
+                    </div>
+
+                    <div class="card city-selector">
+                        <div class="card-header">
+                            <h3>Select Cities</h3>
+                            <div class="actions">
+                                <button class="btn btn-outline">Clear</button>
+                                <button class="btn btn-secondary">
+                                    Select All
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="city-item active">
+                            <div class="city-icon">🏙️</div>
+                            <div class="city-info">
+                                <h4>Karachi</h4>
+                                <p>17 Zones • 56 Cameras</p>
+                            </div>
+                            <div class="city-stats">
+                                <div class="stat">
+                                    AQI:
+                                    <span class="stat-value moderate">144</span>
+                                </div>
+                                <div class="stat">
+                                    Revenue:
+                                    <span class="stat-value">₨ 156,750</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="city-item">
+                            <div class="city-icon">🏙️</div>
+                            <div class="city-info">
+                                <h4>Lahore</h4>
+                                <p>14 Zones • 42 Cameras</p>
+                            </div>
+                            <div class="city-stats">
+                                <div class="stat">
+                                    AQI:
+                                    <span class="stat-value poor">187</span>
+                                </div>
+                                <div class="stat">
+                                    Revenue:
+                                    <span class="stat-value">₨ 134,250</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="city-item">
+                            <div class="city-icon">🏙️</div>
+                            <div class="city-info">
+                                <h4>Islamabad</h4>
+                                <p>8 Zones • 24 Cameras</p>
+                            </div>
+                            <div class="city-stats">
+                                <div class="stat">
+                                    AQI: <span class="stat-value good">85</span>
+                                </div>
+                                <div class="stat">
+                                    Revenue:
+                                    <span class="stat-value">₨ 67,450</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="city-item">
+                            <div class="city-icon">🏙️</div>
+                            <div class="city-info">
+                                <h4>Faisalabad</h4>
+                                <p>6 Zones • 18 Cameras</p>
+                            </div>
+                            <div class="city-stats">
+                                <div class="stat">
+                                    AQI:
+                                    <span class="stat-value moderate">132</span>
+                                </div>
+                                <div class="stat">
+                                    Revenue:
+                                    <span class="stat-value">₨ 56,320</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="city-item">
+                            <div class="city-icon">🏙️</div>
+                            <div class="city-info">
+                                <h4>Rawalpindi</h4>
+                                <p>5 Zones • 15 Cameras</p>
+                            </div>
+                            <div class="city-stats">
+                                <div class="stat">
+                                    AQI:
+                                    <span class="stat-value moderate">118</span>
+                                </div>
+                                <div class="stat">
+                                    Revenue:
+                                    <span class="stat-value">₨ 43,780</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="city-item">
+                            <div class="city-icon">🏙️</div>
+                            <div class="city-info">
+                                <h4>Multan</h4>
+                                <p>4 Zones • 12 Cameras</p>
+                            </div>
+                            <div class="city-stats">
+                                <div class="stat">
+                                    AQI:
+                                    <span class="stat-value moderate">125</span>
+                                </div>
+                                <div class="stat">
+                                    Revenue:
+                                    <span class="stat-value">₨ 38,450</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="city-item">
+                            <div class="city-icon">🏙️</div>
+                            <div class="city-info">
+                                <h4>Hyderabad</h4>
+                                <p>3 Zones • 9 Cameras</p>
+                            </div>
+                            <div class="city-stats">
+                                <div class="stat">
+                                    AQI:
+                                    <span class="stat-value moderate">112</span>
+                                </div>
+                                <div class="stat">
+                                    Revenue:
+                                    <span class="stat-value">₨ 25,670</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Zone Statistics -->
+                    <div class="card zone-statistics">
+                        <div class="card-header">
+                            <h3>Zone Statistics - Karachi</h3>
+                            <div class="actions">
+                                <button class="btn btn-primary">
+                                    View All
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="zone-list">
+                            <div class="zone-item active">
+                                <div class="zone-icon">Z1</div>
+                                <div class="zone-info">
+                                    <h4>Downtown Commercial (#1226)</h4>
+                                    <p>4 Cameras • Tier 2 (Medium)</p>
+                                </div>
+                                <div class="zone-stats">
+                                    <div class="stat">
+                                        Vehicles:
+                                        <span class="stat-value">1,352</span>
+                                    </div>
+                                    <div class="stat">
+                                        Non-Compliant:
+                                        <span class="stat-value">210</span>
+                                    </div>
+                                    <div class="stat">
+                                        Revenue:
+                                        <span class="stat-value">₨ 20,576</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="zone-item">
+                                <div class="zone-icon">Z2</div>
+                                <div class="zone-info">
+                                    <h4>University Road (#1118)</h4>
+                                    <p>3 Cameras • Tier 1 (Low)</p>
+                                </div>
+                                <div class="zone-stats">
+                                    <div class="stat">
+                                        Vehicles:
+                                        <span class="stat-value">895</span>
+                                    </div>
+                                    <div class="stat">
+                                        Non-Compliant:
+                                        <span class="stat-value">132</span>
+                                    </div>
+                                    <div class="stat">
+                                        Revenue:
+                                        <span class="stat-value">₨ 13,200</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="zone-item">
+                                <div class="zone-icon">Z3</div>
+                                <div class="zone-info">
+                                    <h4>Clifton (#1345)</h4>
+                                    <p>5 Cameras • Tier 3 (High)</p>
+                                </div>
+                                <div class="zone-stats">
+                                    <div class="stat">
+                                        Vehicles:
+                                        <span class="stat-value">1,587</span>
+                                    </div>
+                                    <div class="stat">
+                                        Non-Compliant:
+                                        <span class="stat-value">276</span>
+                                    </div>
+                                    <div class="stat">
+                                        Revenue:
+                                        <span class="stat-value">₨ 41,520</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="zone-item">
+                                <div class="zone-icon">Z4</div>
+                                <div class="zone-info">
+                                    <h4>Saddar (#1422)</h4>
+                                    <p>6 Cameras • Tier 2 (Medium)</p>
+                                </div>
+                                <div class="zone-stats">
+                                    <div class="stat">
+                                        Vehicles:
+                                        <span class="stat-value">1,245</span>
+                                    </div>
+                                    <div class="stat">
+                                        Non-Compliant:
+                                        <span class="stat-value">187</span>
+                                    </div>
+                                    <div class="stat">
+                                        Revenue:
+                                        <span class="stat-value">₨ 18,700</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="zone-item">
+                                <div class="zone-icon">Z5</div>
+                                <div class="zone-info">
+                                    <h4>DHA Phase 5 (#1523)</h4>
+                                    <h4>DHA Phase 5 (#1523)</h4>
+                                    <p>4 Cameras • Tier 2 (Medium)</p>
+                                </div>
+                                <div class="zone-stats">
+                                    <div class="stat">
+                                        Vehicles:
+                                        <span class="stat-value">978</span>
+                                    </div>
+                                    <div class="stat">
+                                        Non-Compliant:
+                                        <span class="stat-value">145</span>
+                                    </div>
+                                    <div class="stat">
+                                        Revenue:
+                                        <span class="stat-value">₨ 14,500</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Initialize the map
+            const map = L.map("map").setView([24.8607, 67.0011], 10); // Karachi coordinates
+
+            // Add OpenStreetMap tile layer
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution:
+                    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            }).addTo(map);
+
+            // Major cities in Pakistan with coordinates
+            const cities = [
+                { name: "Karachi", coords: [24.8607, 67.0011], active: true },
+                { name: "Lahore", coords: [31.5204, 74.3587], active: false },
+                {
+                    name: "Islamabad",
+                    coords: [33.6844, 73.0479],
+                    active: false,
+                },
+                {
+                    name: "Faisalabad",
+                    coords: [31.4504, 73.135],
+                    active: false,
+                },
+                {
+                    name: "Rawalpindi",
+                    coords: [33.6007, 73.0679],
+                    active: false,
+                },
+                { name: "Multan", coords: [30.1798, 71.4214], active: false },
+                { name: "Hyderabad", coords: [25.396, 68.3578], active: false },
+            ];
+
+            // Add city markers
+            cities.forEach((city) => {
+                const marker = L.marker(city.coords).addTo(map);
+                marker.bindPopup(
+                    `<b>${city.name}</b><br>Click to view LEZ zones`,
+                );
+            });
+
+            // LEZ zones for Karachi (example data)
+            const karachiZones = [
+                {
+                    id: "KHI-1226",
+                    name: "Downtown Commercial",
+                    coords: [24.8607, 67.0011],
+                    cameras: 4,
+                    tier: 2,
+                },
+                {
+                    id: "KHI-1118",
+                    name: "University Road",
+                    coords: [24.92, 67.07],
+                    cameras: 3,
+                    tier: 1,
+                },
+                {
+                    id: "KHI-1345",
+                    name: "Clifton",
+                    coords: [24.83, 67.03],
+                    cameras: 5,
+                    tier: 3,
+                },
+                {
+                    id: "KHI-1422",
+                    name: "Saddar",
+                    coords: [24.85, 67.02],
+                    cameras: 6,
+                    tier: 2,
+                },
+                {
+                    id: "KHI-1523",
+                    name: "DHA Phase 5",
+                    coords: [24.8, 67.06],
+                    cameras: 4,
+                    tier: 2,
+                },
+            ];
+
+            // Create zone circles for Karachi (initially visible)
+            const zoneCircles = [];
+            karachiZones.forEach((zone) => {
+                let circleColor;
+                switch (zone.tier) {
+                    case 1:
+                        circleColor = "#f39c12";
+                        break; // Warning yellow
+                    case 2:
+                        circleColor = "#3498db";
+                        break; // Primary blue
+                    case 3:
+                        circleColor = "#e74c3c";
+                        break; // Danger red
+                    default:
+                        circleColor = "#3498db";
+                }
+
+                const circle = L.circle(zone.coords, {
+                    color: circleColor,
+                    fillColor: circleColor,
+                    fillOpacity: 0.2,
+                    radius: 1000, // 1km radius
+                }).addTo(map);
+
+                circle.bindPopup(
+                    `<b>Zone ${zone.id}</b><br>${zone.name}<br>Tier ${zone.tier} (${zone.cameras} Cameras)`,
+                );
+                zoneCircles.push(circle);
+            });
+
+            // Camera locations for Karachi (example data)
+            const karachiCameras = [
+                {
+                    id: "KHI-1226-01",
+                    zone: "Downtown Commercial",
+                    coords: [24.8607, 67.0011],
+                    active: true,
+                },
+                {
+                    id: "KHI-1226-02",
+                    zone: "Downtown Commercial",
+                    coords: [24.863, 67.003],
+                    active: true,
+                },
+                {
+                    id: "KHI-1226-03",
+                    zone: "Downtown Commercial",
+                    coords: [24.859, 67.002],
+                    active: true,
+                },
+                {
+                    id: "KHI-1226-04",
+                    zone: "Downtown Commercial",
+                    coords: [24.862, 66.999],
+                    active: true,
+                },
+                {
+                    id: "KHI-1118-01",
+                    zone: "University Road",
+                    coords: [24.92, 67.07],
+                    active: true,
+                },
+                {
+                    id: "KHI-1118-02",
+                    zone: "University Road",
+                    coords: [24.922, 67.073],
+                    active: true,
+                },
+                {
+                    id: "KHI-1118-03",
+                    zone: "University Road",
+                    coords: [24.918, 67.068],
+                    active: true,
+                },
+                {
+                    id: "KHI-1345-01",
+                    zone: "Clifton",
+                    coords: [24.83, 67.03],
+                    active: true,
+                },
+                {
+                    id: "KHI-1345-02",
+                    zone: "Clifton",
+                    coords: [24.832, 67.033],
+                    active: true,
+                },
+                {
+                    id: "KHI-1345-03",
+                    zone: "Clifton",
+                    coords: [24.828, 67.028],
+                    active: false,
+                },
+            ];
+
+            // Create camera markers (initially not visible)
+            const cameraMarkers = [];
+
+            karachiCameras.forEach((camera) => {
+                const cameraIcon = L.divIcon({
+                    className: "camera-icon",
+                    html: camera.active ? "📹" : "📹❌",
+                    iconSize: [20, 20],
+                });
+
+                const marker = L.marker(camera.coords, { icon: cameraIcon });
+                marker.bindPopup(
+                    `<b>Camera ${camera.id}</b><br>${camera.zone} Zone<br>Status: ${camera.active ? "Active" : "Inactive"}`,
+                );
+                cameraMarkers.push(marker);
+            });
+
+            // Function to toggle camera markers
+            function toggleCameraMarkers(show) {
+                cameraMarkers.forEach((marker) => {
+                    if (show) {
+                        marker.addTo(map);
+                    } else {
+                        marker.remove();
+                    }
+                });
+            }
+
+            // Event listeners for city selection
+            document
+                .querySelectorAll(".city-item")
+                .forEach((cityItem, index) => {
+                    cityItem.addEventListener("click", () => {
+                        // Update UI for selected city
+                        document
+                            .querySelectorAll(".city-item")
+                            .forEach((item) => {
+                                item.classList.remove("active");
+                            });
+                        cityItem.classList.add("active");
+
+                        // Center map on selected city
+                        map.setView(cities[index].coords, 11);
+
+                        // Show camera markers when a city is selected
+                        toggleCameraMarkers(true);
+                    });
+                });
+
+            // Event listeners for zone selection
+            document
+                .querySelectorAll(".zone-item")
+                .forEach((zoneItem, index) => {
+                    zoneItem.addEventListener("click", () => {
+                        // Update UI for selected zone
+                        document
+                            .querySelectorAll(".zone-item")
+                            .forEach((item) => {
+                                item.classList.remove("active");
+                            });
+                        zoneItem.classList.add("active");
+
+                        // Center map on selected zone
+                        if (karachiZones[index]) {
+                            map.setView(karachiZones[index].coords, 14);
+                        }
+                    });
+                });
+        </script>
+    </body>
+</html>
